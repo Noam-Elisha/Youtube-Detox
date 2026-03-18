@@ -1,0 +1,193 @@
+/* YouTube Detox - CSS Rules
+   These provide instant hiding before JS runs, preventing flash of unwanted content.
+   JS adds/removes body classes based on user settings. */
+
+/* ===== DISABLE SHORTS ===== */
+
+/* Hide Shorts shelves on home page and feeds */
+body.ytd-shorts-disabled ytd-rich-shelf-renderer[is-shorts],
+body.ytd-shorts-disabled ytd-reel-shelf-renderer,
+body.ytd-shorts-disabled ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+body.ytd-shorts-disabled ytd-rich-section-renderer:has(ytd-reel-shelf-renderer) {
+  display: none !important;
+}
+
+/* Hide Shorts tab in sidebar navigation (target the parent renderer, not just the link) */
+body.ytd-shorts-disabled ytd-mini-guide-entry-renderer:has(a[title="Shorts"]),
+body.ytd-shorts-disabled ytd-guide-entry-renderer:has(a[title="Shorts"]) {
+  display: none !important;
+}
+
+/* Hide Shorts in search results */
+body.ytd-shorts-disabled ytd-search ytd-reel-shelf-renderer {
+  display: none !important;
+}
+
+/* Hide individual Short video items in feeds */
+body.ytd-shorts-disabled ytd-grid-video-renderer:has(a[href*="/shorts/"]),
+body.ytd-shorts-disabled ytd-rich-item-renderer:has(a[href*="/shorts/"]),
+body.ytd-shorts-disabled ytd-video-renderer:has(a[href*="/shorts/"]) {
+  display: none !important;
+}
+
+/* On a Shorts page: just hide navigation arrows, don't touch layout/reels */
+body.ytd-shorts-disabled #navigation-button-down,
+body.ytd-shorts-disabled #navigation-button-up {
+  display: none !important;
+}
+
+/* Hide shorts loaded dynamically in search results (covers newer YouTube components) */
+body.ytd-shorts-disabled ytd-item-section-renderer ytd-video-renderer:has(a[href*="/shorts/"]),
+body.ytd-shorts-disabled ytd-search ytd-video-renderer:has(a[href*="/shorts/"]),
+body.ytd-shorts-disabled ytd-shelf-renderer:has(a[href*="/shorts/"]),
+body.ytd-shorts-disabled ytd-reel-item-renderer {
+  display: none !important;
+}
+
+/* [is-shorts] but NOT on the /shorts/ player page — scope to feeds/browse only */
+body.ytd-shorts-disabled ytd-browse [is-shorts],
+body.ytd-shorts-disabled ytd-search [is-shorts] {
+  display: none !important;
+}
+
+/* Newer shorts grid shelf in search results — the whole shelf with the "Shorts" header */
+body.ytd-shorts-disabled grid-shelf-view-model,
+body.ytd-shorts-disabled ytm-shorts-lockup-view-model-v2,
+body.ytd-shorts-disabled ytm-shorts-lockup-view-model {
+  display: none !important;
+}
+
+/* ===== DISABLE RECOMMENDATIONS (non-subscribed) ===== */
+/* Hide the entire recommendation grid on the home page to prevent infinite reload loop.
+   YouTube detects hidden individual items as empty space and loads more, so we hide
+   the whole container instead. JS inserts the detox hint before this container. */
+body.ytd-recs-disabled ytd-browse[page-subtype="home"] ytd-rich-grid-renderer #contents {
+  display: none !important;
+}
+
+/* Also hide the chips bar (topic filter bar) on home page */
+body.ytd-recs-disabled ytd-browse[page-subtype="home"] ytd-feed-filter-chip-bar-renderer,
+body.ytd-recs-disabled ytd-browse[page-subtype="home"] iron-selector#chips {
+  display: none !important;
+}
+
+/* ===== DISABLE SIDE RECOMMENDATIONS ===== */
+body.ytd-side-recs-disabled #secondary.ytd-watch-flexy,
+body.ytd-side-recs-disabled ytd-watch-next-secondary-results-renderer {
+  display: none !important;
+}
+
+/* Make the video player take full width when side recs are hidden, and prevent horizontal scroll */
+body.ytd-side-recs-disabled #primary.ytd-watch-flexy {
+  max-width: 100% !important;
+}
+
+body.ytd-side-recs-disabled ytd-watch-flexy[flexy][is-two-columns_] #primary.ytd-watch-flexy {
+  max-width: 100% !important;
+}
+
+body.ytd-side-recs-disabled ytd-watch-flexy {
+  overflow-x: hidden !important;
+}
+
+body.ytd-side-recs-disabled #columns.ytd-watch-flexy {
+  overflow-x: hidden !important;
+}
+
+/* Force single-column layout when side recs are hidden */
+body.ytd-side-recs-disabled ytd-watch-flexy[flexy] {
+  --ytd-watch-flexy-panel-max-height: none !important;
+}
+
+body.ytd-side-recs-disabled #primary-inner {
+  max-width: 100% !important;
+}
+
+/* ===== DISABLE AUTO-PREVIEW (thumbnail hover video) ===== */
+/* Hide the inline video preview that plays when hovering over thumbnails */
+body.ytd-no-preview ytd-moving-thumbnail-renderer,
+body.ytd-no-preview ytd-thumbnail #mouseover-overlay,
+body.ytd-no-preview ytd-thumbnail video,
+body.ytd-no-preview ytd-thumbnail .ytd-moving-thumbnail-renderer {
+  display: none !important;
+}
+
+/* Also prevent the thumbnail from triggering video load */
+body.ytd-no-preview ytd-thumbnail[now-playing] video,
+body.ytd-no-preview #video-preview,
+body.ytd-no-preview ytd-video-preview,
+body.ytd-no-preview #inline-preview-player {
+  display: none !important;
+}
+
+/* ===== FRICTION OVERLAY ===== */
+#ytd-friction-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #0f0f0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.8s ease-out;
+}
+
+#ytd-friction-overlay.ytd-friction-fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ytd-friction-content {
+  text-align: center;
+  color: #f1f1f1;
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  max-width: 400px;
+  padding: 40px;
+}
+
+.ytd-friction-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.ytd-friction-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.ytd-friction-subtitle {
+  font-size: 16px;
+  color: #aaa;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.ytd-friction-bar-track {
+  width: 100%;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.ytd-friction-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: #3ea6ff;
+  border-radius: 3px;
+}
+
+.ytd-friction-time {
+  font-size: 14px;
+  color: #777;
+}
+
+/* ===== DISABLE "PEOPLE ALSO SEARCH FOR" ===== */
+body.ytd-also-search-disabled ytd-horizontal-card-list-renderer,
+body.ytd-also-search-disabled ytd-search-refinement-card-renderer,
+body.ytd-also-search-disabled .search-refinement-component-dismissible {
+  display: none !important;
+}

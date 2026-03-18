@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 320px;
+      font-family: 'Segoe UI', 'Roboto', sans-serif;
+      background: #0f0f0f;
+      color: #f1f1f1;
+      padding: 0;
+    }
+
+    .header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #272727;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f1f1f1;
+    }
+
+    .header .logo {
+      font-size: 22px;
+    }
+
+    .settings {
+      padding: 8px 0;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .setting-item:hover {
+      background: #272727;
+    }
+
+    .setting-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+      margin-right: 12px;
+    }
+
+    .setting-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .setting-desc {
+      font-size: 11px;
+      color: #aaa;
+      line-height: 1.3;
+    }
+
+    /* Toggle switch */
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #555;
+      border-radius: 11px;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: #3ea6ff;
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px solid #272727;
+      margin: 4px 20px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #777;
+      padding: 10px 20px 2px;
+    }
+
+    .friction-options {
+      padding: 0 20px 8px;
+      display: none;
+    }
+
+    .friction-options.visible {
+      display: block;
+    }
+
+    .friction-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+    }
+
+    .friction-row-label {
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .friction-row select,
+    .friction-row input[type="number"] {
+      background: #222;
+      border: 1px solid #444;
+      color: #f1f1f1;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .friction-row select {
+      width: 130px;
+    }
+
+    .friction-row input[type="number"] {
+      width: 70px;
+      text-align: center;
+    }
+
+    .friction-row select:focus,
+    .friction-row input[type="number"]:focus {
+      border-color: #3ea6ff;
+    }
+
+    .footer {
+      padding: 12px 20px;
+      border-top: 1px solid #272727;
+      text-align: center;
+      font-size: 11px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">&#x1f9d8;</span>
+    <h1>YouTube Detox</h1>
+  </div>
+
+  <div class="settings">
+    <label class="setting-item">
+      <div class="setting-label">
+        <span class="setting-name">Disable Shorts</span>
+        <span class="setting-desc">Hide all Shorts across YouTube</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="disableShorts">
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+
+    <label class="setting-item">
+      <div class="setting-label">
+        <span class="setting-name">Disable Recommendations</span>
+        <span class="setting-desc">Only show videos from subscribed channels</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="disableRecommendations">
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+
+    <label class="setting-item">
+      <div class="setting-label">
+        <span class="setting-name">Disable Auto-play</span>
+        <span class="setting-desc">Prevent videos from auto-playing next</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="disableAutoplay">
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+
+    <label class="setting-item">
+      <div class="setting-label">
+        <span class="setting-name">Disable Side Recommendations</span>
+        <span class="setting-desc">Remove suggested videos sidebar when watching</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="disableSideRecs">
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+
+    <label class="setting-item">
+      <div class="setting-label">
+        <span class="setting-name">Disable "Also Searched"</span>
+        <span class="setting-desc">Remove "People also search for" in results</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="disableAlsoSearched">
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+
+    <label class="setting-item">
+      <div class="setting-label">
+        <span class="setting-name">Disable Auto-preview</span>
+        <span class="setting-desc">Stop video playing when hovering thumbnails</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="disableAutoPreview">
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+    <hr class="section-divider">
+    <div class="section-title">Friction</div>
+
+    <label class="setting-item">
+      <div class="setting-label">
+        <span class="setting-name">Add Friction</span>
+        <span class="setting-desc">Show a delay overlay before YouTube loads</span>
+      </div>
+      <div class="toggle">
+        <input type="checkbox" id="frictionEnabled">
+        <span class="toggle-slider"></span>
+      </div>
+    </label>
+
+    <div class="friction-options" id="frictionOptions">
+      <div class="friction-row">
+        <span class="friction-row-label">Delay (seconds)</span>
+        <input type="number" id="frictionDuration" min="1" max="60" value="5">
+      </div>
+      <div class="friction-row">
+        <span class="friction-row-label">Show on</span>
+        <select id="frictionTrigger">
+          <option value="home">Home page only</option>
+          <option value="video">Videos only</option>
+          <option value="all">All pages</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Changes apply instantly on open YouTube tabs
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
