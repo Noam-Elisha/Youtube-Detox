@@ -217,68 +217,221 @@
     return true;
   }
 
-  function generateCaptcha() {
-    const ops = [
-      { sym: "+", fn: (a, b) => a + b },
-      { sym: "-", fn: (a, b) => a - b },
-      { sym: "×", fn: (a, b) => a * b },
-    ];
-    const op = ops[Math.floor(Math.random() * ops.length)];
-    let a, b;
-    if (op.sym === "×") {
-      a = Math.floor(Math.random() * 10) + 2;
-      b = Math.floor(Math.random() * 10) + 2;
-    } else if (op.sym === "-") {
-      a = Math.floor(Math.random() * 40) + 10;
-      b = Math.floor(Math.random() * a);
-    } else {
-      a = Math.floor(Math.random() * 50) + 10;
-      b = Math.floor(Math.random() * 50) + 10;
-    }
-    return { question: `${a} ${op.sym} ${b}`, answer: op.fn(a, b) };
-  }
-
   function dismissFrictionOverlay(overlay) {
     overlay.classList.add("ytd-friction-fade-out");
     setTimeout(() => overlay.remove(), 800);
+  }
+
+  // --- Slider puzzle CAPTCHA ---
+
+  function drawPuzzlePiecePath(ctx, x, y, size) {
+    // Draws a jigsaw-piece shaped clip path
+    const s = size;
+    const tab = s * 0.25; // tab bump size
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    // Top edge with tab
+    ctx.lineTo(x + s * 0.35, y);
+    ctx.bezierCurveTo(
+      x + s * 0.35, y - tab,
+      x + s * 0.65, y - tab,
+      x + s * 0.65, y
+    );
+    ctx.lineTo(x + s, y);
+    // Right edge with tab
+    ctx.lineTo(x + s, y + s * 0.35);
+    ctx.bezierCurveTo(
+      x + s + tab, y + s * 0.35,
+      x + s + tab, y + s * 0.65,
+      x + s, y + s * 0.65
+    );
+    ctx.lineTo(x + s, y + s);
+    // Bottom edge
+    ctx.lineTo(x, y + s);
+    // Left edge
+    ctx.lineTo(x, y);
+    ctx.closePath();
   }
 
   function showCaptchaPhase(overlay) {
     const content = overlay.querySelector(".ytd-friction-content");
     if (!content) return;
 
-    const captcha = generateCaptcha();
+    const W = 320;
+    const H = 180;
+    const pieceSize = 50;
+    // Random target X for the puzzle hole (keep away from edges)
+    const targetX = Math.floor(Math.random() * (W - pieceSize * 2 - 40)) + pieceSize + 20;
+    const targetY = Math.floor((H - pieceSize) / 2);
+    const tolerance = 5;
 
     content.innerHTML = `
-      <div class="ytd-friction-icon">&#x1f512;</div>
-      <div class="ytd-friction-title">One more thing...</div>
-      <div class="ytd-friction-subtitle">Solve this to continue</div>
-      <div class="ytd-captcha-question">${captcha.question} = ?</div>
-      <input type="text" id="ytd-captcha-input" class="ytd-captcha-input"
-             autocomplete="off" inputmode="numeric" placeholder="Answer">
-      <div class="ytd-captcha-error" id="ytd-captcha-error"></div>
+      <div class="ytd-friction-title" style="margin-bottom:16px">Verify you're human</div>
+      <div class="ytd-friction-subtitle" style="margin-bottom:20px">Drag the slider to complete the puzzle</div>
+      <div class="ytd-captcha-canvas-wrap" id="ytd-captcha-wrap">
+        <canvas id="ytd-captcha-bg" width="${W}" height="${H}"></canvas>
+        <canvas id="ytd-captcha-piece" width="${pieceSize + 10}" height="${H}"
+                style="position:absolute;top:0;left:0;"></canvas>
+      </div>
+      <div class="ytd-captcha-slider-track" id="ytd-captcha-track">
+        <div class="ytd-captcha-slider-thumb" id="ytd-captcha-thumb">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+        <div class="ytd-captcha-slider-label" id="ytd-captcha-label">Slide to complete</div>
+      </div>
+      <div class="ytd-captcha-status" id="ytd-captcha-status"></div>
     `;
 
-    // Focus the input after a frame
     requestAnimationFrame(() => {
-      const input = document.getElementById("ytd-captcha-input");
-      if (input) {
-        input.focus();
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            const val = parseInt(input.value.trim(), 10);
-            if (val === captcha.answer) {
-              dismissFrictionOverlay(overlay);
-            } else {
-              const errEl = document.getElementById("ytd-captcha-error");
-              if (errEl) errEl.textContent = "Wrong — try again";
-              input.value = "";
-              input.classList.add("ytd-captcha-shake");
-              setTimeout(() => input.classList.remove("ytd-captcha-shake"), 400);
-            }
-          }
-        });
+      const bgCanvas = document.getElementById("ytd-captcha-bg");
+      const pieceCanvas = document.getElementById("ytd-captcha-piece");
+      if (!bgCanvas || !pieceCanvas) return;
+
+      const bgCtx = bgCanvas.getContext("2d");
+      const pcCtx = pieceCanvas.getContext("2d");
+
+      // Draw a colorful abstract background
+      const grad = bgCtx.createLinearGradient(0, 0, W, H);
+      grad.addColorStop(0, "#1a237e");
+      grad.addColorStop(0.3, "#4a148c");
+      grad.addColorStop(0.6, "#006064");
+      grad.addColorStop(1, "#1b5e20");
+      bgCtx.fillStyle = grad;
+      bgCtx.fillRect(0, 0, W, H);
+
+      // Draw random geometric shapes for visual complexity
+      for (let i = 0; i < 20; i++) {
+        bgCtx.fillStyle = `hsla(${Math.random() * 360}, 70%, 60%, 0.15)`;
+        bgCtx.beginPath();
+        const cx = Math.random() * W;
+        const cy = Math.random() * H;
+        const r = Math.random() * 40 + 10;
+        bgCtx.arc(cx, cy, r, 0, Math.PI * 2);
+        bgCtx.fill();
       }
+      for (let i = 0; i < 12; i++) {
+        bgCtx.strokeStyle = `hsla(${Math.random() * 360}, 60%, 70%, 0.2)`;
+        bgCtx.lineWidth = Math.random() * 3 + 1;
+        bgCtx.beginPath();
+        bgCtx.moveTo(Math.random() * W, Math.random() * H);
+        bgCtx.lineTo(Math.random() * W, Math.random() * H);
+        bgCtx.stroke();
+      }
+
+      // Draw small dots grid
+      bgCtx.fillStyle = "rgba(255,255,255,0.08)";
+      for (let gx = 0; gx < W; gx += 16) {
+        for (let gy = 0; gy < H; gy += 16) {
+          bgCtx.fillRect(gx, gy, 1, 1);
+        }
+      }
+
+      // Extract the puzzle piece image from the background
+      pcCtx.save();
+      drawPuzzlePiecePath(pcCtx, 5, targetY, pieceSize);
+      pcCtx.clip();
+      pcCtx.drawImage(bgCanvas, targetX - 5, 0, pieceSize + 10, H, 0, 0, pieceSize + 10, H);
+      pcCtx.restore();
+
+      // Draw piece outline
+      pcCtx.save();
+      drawPuzzlePiecePath(pcCtx, 5, targetY, pieceSize);
+      pcCtx.strokeStyle = "rgba(255,255,255,0.8)";
+      pcCtx.lineWidth = 2;
+      pcCtx.stroke();
+      pcCtx.restore();
+
+      // Draw the hole on the background
+      bgCtx.save();
+      drawPuzzlePiecePath(bgCtx, targetX, targetY, pieceSize);
+      bgCtx.fillStyle = "rgba(0,0,0,0.5)";
+      bgCtx.fill();
+      bgCtx.strokeStyle = "rgba(255,255,255,0.3)";
+      bgCtx.lineWidth = 2;
+      bgCtx.stroke();
+      bgCtx.restore();
+
+      // Slider interaction
+      const thumb = document.getElementById("ytd-captcha-thumb");
+      const track = document.getElementById("ytd-captcha-track");
+      const label = document.getElementById("ytd-captcha-label");
+      const status = document.getElementById("ytd-captcha-status");
+      if (!thumb || !track) return;
+
+      let dragging = false;
+      let startX = 0;
+      let currentOffset = 0;
+      const trackWidth = W;
+      const thumbWidth = 44;
+      const maxOffset = trackWidth - thumbWidth;
+
+      function updatePiecePosition(offset) {
+        const piecePx = (offset / maxOffset) * (W - pieceSize - 10);
+        pieceCanvas.style.left = piecePx + "px";
+      }
+
+      function onStart(e) {
+        dragging = true;
+        startX = (e.touches ? e.touches[0].clientX : e.clientX) - currentOffset;
+        thumb.classList.add("ytd-captcha-thumb-active");
+        if (label) label.style.opacity = "0";
+      }
+
+      function onMove(e) {
+        if (!dragging) return;
+        e.preventDefault();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        let offset = clientX - startX;
+        offset = Math.max(0, Math.min(maxOffset, offset));
+        currentOffset = offset;
+        thumb.style.transform = `translateX(${offset}px)`;
+        updatePiecePosition(offset);
+      }
+
+      function onEnd() {
+        if (!dragging) return;
+        dragging = false;
+        thumb.classList.remove("ytd-captcha-thumb-active");
+
+        // Check if piece is in the right position
+        const piecePx = (currentOffset / maxOffset) * (W - pieceSize - 10);
+        const targetPx = targetX - 5;
+
+        if (Math.abs(piecePx - targetPx) <= tolerance) {
+          // Success
+          thumb.style.background = "#4caf50";
+          if (status) {
+            status.textContent = "✓ Verified";
+            status.style.color = "#4caf50";
+          }
+          pieceCanvas.style.left = targetPx + "px";
+          setTimeout(() => dismissFrictionOverlay(overlay), 600);
+        } else {
+          // Fail — reset
+          if (status) {
+            status.textContent = "Try again";
+            status.style.color = "#ff4444";
+          }
+          thumb.classList.add("ytd-captcha-shake");
+          setTimeout(() => {
+            thumb.classList.remove("ytd-captcha-shake");
+            currentOffset = 0;
+            thumb.style.transform = "translateX(0)";
+            pieceCanvas.style.left = "0px";
+            if (label) label.style.opacity = "1";
+            if (status) status.textContent = "";
+          }, 500);
+        }
+      }
+
+      thumb.addEventListener("mousedown", onStart);
+      thumb.addEventListener("touchstart", onStart, { passive: true });
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("touchmove", onMove, { passive: false });
+      document.addEventListener("mouseup", onEnd);
+      document.addEventListener("touchend", onEnd);
     });
   }
 
