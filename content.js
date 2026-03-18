@@ -14,6 +14,7 @@
     frictionEnabled: true,
     frictionDuration: 5,
     frictionTrigger: "home", // "home" | "video" | "all"
+    frictionCaptcha: true,
   };
 
   let settings = { ...DEFAULT_SETTINGS };
@@ -216,6 +217,71 @@
     return true;
   }
 
+  function generateCaptcha() {
+    const ops = [
+      { sym: "+", fn: (a, b) => a + b },
+      { sym: "-", fn: (a, b) => a - b },
+      { sym: "×", fn: (a, b) => a * b },
+    ];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+    let a, b;
+    if (op.sym === "×") {
+      a = Math.floor(Math.random() * 10) + 2;
+      b = Math.floor(Math.random() * 10) + 2;
+    } else if (op.sym === "-") {
+      a = Math.floor(Math.random() * 40) + 10;
+      b = Math.floor(Math.random() * a);
+    } else {
+      a = Math.floor(Math.random() * 50) + 10;
+      b = Math.floor(Math.random() * 50) + 10;
+    }
+    return { question: `${a} ${op.sym} ${b}`, answer: op.fn(a, b) };
+  }
+
+  function dismissFrictionOverlay(overlay) {
+    overlay.classList.add("ytd-friction-fade-out");
+    setTimeout(() => overlay.remove(), 800);
+  }
+
+  function showCaptchaPhase(overlay) {
+    const content = overlay.querySelector(".ytd-friction-content");
+    if (!content) return;
+
+    const captcha = generateCaptcha();
+
+    content.innerHTML = `
+      <div class="ytd-friction-icon">&#x1f512;</div>
+      <div class="ytd-friction-title">One more thing...</div>
+      <div class="ytd-friction-subtitle">Solve this to continue</div>
+      <div class="ytd-captcha-question">${captcha.question} = ?</div>
+      <input type="text" id="ytd-captcha-input" class="ytd-captcha-input"
+             autocomplete="off" inputmode="numeric" placeholder="Answer">
+      <div class="ytd-captcha-error" id="ytd-captcha-error"></div>
+    `;
+
+    // Focus the input after a frame
+    requestAnimationFrame(() => {
+      const input = document.getElementById("ytd-captcha-input");
+      if (input) {
+        input.focus();
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const val = parseInt(input.value.trim(), 10);
+            if (val === captcha.answer) {
+              dismissFrictionOverlay(overlay);
+            } else {
+              const errEl = document.getElementById("ytd-captcha-error");
+              if (errEl) errEl.textContent = "Wrong — try again";
+              input.value = "";
+              input.classList.add("ytd-captcha-shake");
+              setTimeout(() => input.classList.remove("ytd-captcha-shake"), 400);
+            }
+          }
+        });
+      }
+    });
+  }
+
   function showFrictionOverlay() {
     if (!shouldShowFriction()) return;
 
@@ -264,11 +330,14 @@
       if (remaining <= 0) clearInterval(countdownInterval);
     }, 1000);
 
-    // Fade out and remove after duration
+    // After timer: either show captcha or fade out
     setTimeout(() => {
       clearInterval(countdownInterval);
-      overlay.classList.add("ytd-friction-fade-out");
-      setTimeout(() => overlay.remove(), 800);
+      if (settings.frictionCaptcha) {
+        showCaptchaPhase(overlay);
+      } else {
+        dismissFrictionOverlay(overlay);
+      }
     }, duration * 1000);
   }
 

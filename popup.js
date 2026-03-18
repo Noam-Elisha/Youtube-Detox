@@ -20,12 +20,14 @@ const DEFAULT_SETTINGS = {
   frictionEnabled: true,
   frictionDuration: 5,
   frictionTrigger: "home",
+  frictionCaptcha: true,
 };
 
 const frictionOptions = document.getElementById("frictionOptions");
 const frictionDuration = document.getElementById("frictionDuration");
 const frictionTrigger = document.getElementById("frictionTrigger");
 const frictionToggle = document.getElementById("frictionEnabled");
+const frictionCaptcha = document.getElementById("frictionCaptcha");
 
 function updateFrictionVisibility(enabled) {
   if (frictionOptions) {
@@ -43,6 +45,7 @@ chrome.storage.sync.get(DEFAULT_SETTINGS, (result) => {
   }
   if (frictionDuration) frictionDuration.value = result.frictionDuration;
   if (frictionTrigger) frictionTrigger.value = result.frictionTrigger;
+  if (frictionCaptcha) frictionCaptcha.checked = result.frictionCaptcha;
   updateFrictionVisibility(result.frictionEnabled);
 });
 
@@ -76,5 +79,12 @@ if (frictionDuration) {
 if (frictionTrigger) {
   frictionTrigger.addEventListener("change", () => {
     chrome.storage.sync.set({ frictionTrigger: frictionTrigger.value });
+  });
+}
+
+// Friction captcha toggle
+if (frictionCaptcha) {
+  frictionCaptcha.addEventListener("change", () => {
+    chrome.storage.sync.set({ frictionCaptcha: frictionCaptcha.checked });
   });
 }

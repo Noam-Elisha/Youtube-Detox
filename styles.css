@@ -185,6 +185,61 @@ body.ytd-no-preview #inline-preview-player {
   color: #777;
 }
 
+/* ===== CAPTCHA PHASE ===== */
+.ytd-captcha-question {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 24px;
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ytd-captcha-input {
+  background: #1a1a1a;
+  border: 2px solid #333;
+  color: #f1f1f1;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: center;
+  padding: 12px 20px;
+  border-radius: 8px;
+  width: 160px;
+  outline: none;
+  font-family: 'YouTube Sans', 'Roboto', sans-serif;
+  transition: border-color 0.2s;
+}
+
+.ytd-captcha-input:focus {
+  border-color: #3ea6ff;
+}
+
+.ytd-captcha-input::placeholder {
+  color: #555;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.ytd-captcha-error {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #ff4444;
+  min-height: 20px;
+}
+
+@keyframes ytd-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.ytd-captcha-shake {
+  animation: ytd-shake 0.4s ease;
+  border-color: #ff4444 !important;
+}
+
 /* ===== DISABLE "PEOPLE ALSO SEARCH FOR" ===== */
 body.ytd-also-search-disabled ytd-horizontal-card-list-renderer,
 body.ytd-also-search-disabled ytd-search-refinement-card-renderer,
